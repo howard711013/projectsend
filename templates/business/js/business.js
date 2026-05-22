@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup file cards interaction
     setupFileCards();
+
+    // Setup file info panel (Google Drive-style details)
+    setupFileInfoPanel();
     
     // Setup accessibility features
     setupAccessibility();
@@ -153,8 +156,8 @@ function setupFileCards() {
         // Make entire card clickable for checkbox
         if (checkbox && !isExpired) {
             card.addEventListener('click', function(e) {
-                // Don't toggle if clicking on download button or links
-                if (e.target.closest('a')) {
+                // Don't toggle if clicking on download button, info button, or links
+                if (e.target.closest('a') || e.target.closest('.file-info-btn')) {
                     return;
                 }
                 
@@ -324,6 +327,194 @@ function setupBatchSelection() {
     // Initial state
     updateSelectAllState();
     updateDownloadButton();
+}
+
+/**
+ * File Info Panel (Google Drive-style)
+ */
+function setupFileInfoPanel() {
+    document.querySelectorAll('.file-info-btn').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openFileInfoPanel(button.dataset.fileId);
+        });
+    });
+
+    const closeBtn = document.getElementById('close-info-panel');
+    const overlay = document.getElementById('info-panel-overlay');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeFileInfoPanel);
+    }
+    if (overlay) {
+        overlay.addEventListener('click', closeFileInfoPanel);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeFileInfoPanel();
+        }
+    });
+}
+
+function openFileInfoPanel(fileId) {
+    const panel = document.getElementById('file-info-panel');
+    const overlay = document.getElementById('info-panel-overlay');
+    const content = document.getElementById('file-info-content');
+
+    if (!panel || !overlay || !content || !fileId) {
+        return;
+    }
+
+    const strings = window.businessFileInfoStrings || {};
+    const loadingText = strings.loading || 'Loading...';
+    content.innerHTML = '<div class="text-center py-8"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-900 dark:border-primary-500"></div><p class="mt-2 text-sm text-gray-500 dark:text-gray-400">' + escapeHtml(loadingText) + '</p></div>';
+
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('overflow-hidden');
+
+    requestAnimationFrame(function() {
+        panel.classList.remove('translate-x-full');
+    });
+
+    const baseUrl = window.base_url || '/';
+    const params = new URLSearchParams({ do: 'get_file_info', file_id: fileId });
+
+    fetch(baseUrl + 'process.php?' + params.toString(), {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+    })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success && data.file) {
+                content.innerHTML = buildFileInfoHTML(data.file);
+            } else {
+                const strings = window.businessFileInfoStrings || {};
+                const msg = data.error || strings.errorLoading || 'Error loading file information';
+                content.innerHTML = '<div class="text-center py-8 text-red-600 dark:text-red-400">' + escapeHtml(msg) + '</div>';
+            }
+        })
+        .catch(function() {
+            const strings = window.businessFileInfoStrings || {};
+            content.innerHTML = '<div class="text-center py-8 text-red-600 dark:text-red-400">' + escapeHtml(strings.errorLoading || 'Error loading file information') + '</div>';
+        });
+}
+
+function closeFileInfoPanel() {
+    const panel = document.getElementById('file-info-panel');
+    const overlay = document.getElementById('info-panel-overlay');
+
+    if (!panel || !overlay) {
+        return;
+    }
+
+    panel.classList.add('translate-x-full');
+
+    setTimeout(function() {
+        overlay.classList.add('hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+    }, 300);
+}
+
+function buildFileInfoHTML(file) {
+    const s = window.businessFileInfoStrings || {};
+    let html = '<div class="space-y-6">';
+
+    html += '<div class="text-center">';
+    if (file.is_image && file.thumbnail) {
+        html += '<img src="' + escapeHtml(file.thumbnail) + '" alt="' + escapeHtml(file.title) + '" class="mx-auto max-w-full h-32 object-cover rounded-lg shadow-sm">';
+    } else {
+        const iconClass = getFileTypeIcon(file.extension || '');
+        html += '<div class="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">';
+        html += '<i class="' + iconClass + ' text-3xl text-gray-400 dark:text-gray-500"></i>';
+        html += '</div>';
+    }
+    html += '<h4 class="mt-3 font-semibold text-gray-900 dark:text-white">' + escapeHtml(file.title) + '</h4>';
+    html += '</div>';
+
+    html += '<div class="space-y-4"><div class="grid grid-cols-1 gap-3">';
+
+    if (file.filename_original && file.filename_original !== file.title) {
+        html += detailRow(s.originalFilename || 'Original filename', file.filename_original);
+    }
+
+    if (file.description) {
+        html += detailRow(s.description || 'Description', file.description);
+    }
+
+    html += detailRow(s.size || 'Size', file.size_formatted || '—');
+    const typeLabel = file.extension
+        ? file.extension.toUpperCase() + ' file'
+        : (s.unknown || 'Unknown');
+    html += detailRow(s.type || 'Type', typeLabel);
+    html += detailRow(s.uploaded || 'Uploaded', file.uploaded_date || '—');
+
+    if (file.uploaded_by) {
+        html += detailRow(s.uploadedBy || 'Uploaded by', file.uploaded_by);
+    }
+
+    const dimensions = getImageDimensions(file);
+    if (dimensions) {
+        html += detailRow(s.dimensions || 'Dimensions', dimensions);
+    }
+
+    if (file.expires == 1) {
+        const expiryText = file.expiry_date_formatted || file.expiry_date || 'Set to expire';
+        const daysNote = (file.days_until_expiry !== undefined && !file.expired)
+            ? ' (' + file.days_until_expiry + ' ' + (s.days || 'days') + ')'
+            : '';
+        html += detailRow(s.expires || 'Expires', expiryText + daysNote);
+    }
+
+    if (file.categories && file.categories.length > 0) {
+        const categoryNames = file.categories.map(function(c) { return c.name; }).join(', ');
+        html += detailRow(s.categories || 'Categories', categoryNames);
+    }
+
+    html += '</div>';
+
+    const downloadUrl = file.download_url || file.download_link;
+    if (!file.expired && downloadUrl) {
+        html += '<div class="pt-4 border-t border-gray-200 dark:border-gray-700">';
+        html += '<a href="' + escapeHtml(downloadUrl) + '" class="inline-flex items-center px-4 py-2 bg-primary-900 hover:bg-primary-800 text-white rounded-lg text-sm font-medium transition-colors">';
+        html += '<i class="fas fa-download mr-2"></i>' + escapeHtml(s.download || 'Download') + '</a>';
+        html += '</div>';
+    }
+
+    html += '</div></div>';
+
+    return html;
+}
+
+function detailRow(label, value) {
+    return '<div><label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">' +
+        escapeHtml(label) + '</label>' +
+        '<p class="mt-1 text-sm text-gray-900 dark:text-white">' + escapeHtml(String(value)) + '</p></div>';
+}
+
+function getImageDimensions(file) {
+    if (file.image_info && file.image_info.dimensions_formatted) {
+        return file.image_info.dimensions_formatted;
+    }
+    if (file.image_metadata && file.image_metadata.width && file.image_metadata.height) {
+        return file.image_metadata.width + ' × ' + file.image_metadata.height + ' pixels';
+    }
+    return null;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 /**

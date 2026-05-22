@@ -395,6 +395,13 @@ include_once 'lang/' . LOADED_LANG . '.mo.php';
                 <?php endif; ?>
                 <!-- File Icon/Thumbnail -->
                 <div class="p-6 text-center relative">
+                    <button type="button"
+                            class="file-info-btn absolute top-2 right-2 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 hover:text-primary-900 dark:hover:text-primary-400 shadow-sm z-10"
+                            data-file-id="<?php echo $file->id; ?>"
+                            title="<?php _e('File info', 'business_template'); ?>"
+                            aria-label="<?php _e('File info', 'business_template'); ?>">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
                     <?php if ($file->isImage() && !$file->expired): 
                         $thumbnail = make_thumbnail($file->full_path, null, TEMPLATE_THUMBNAILS_WIDTH, TEMPLATE_THUMBNAILS_HEIGHT);
                         if (!empty($thumbnail['thumbnail']['url'])): ?>
@@ -511,6 +518,26 @@ include_once 'lang/' . LOADED_LANG . '.mo.php';
         <?php endif; ?>
     </main>
 
+    <!-- File Info Panel Overlay -->
+    <div id="info-panel-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-40 transition-opacity duration-300 ease-in-out" aria-hidden="true"></div>
+
+    <!-- File Info Panel -->
+    <div id="file-info-panel" class="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50" role="dialog" aria-modal="true" aria-labelledby="file-info-panel-title">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 id="file-info-panel-title" class="text-lg font-semibold text-gray-900 dark:text-white"><?php _e('File info', 'business_template'); ?></h3>
+                <button type="button" id="close-info-panel" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="<?php _e('Close', 'business_template'); ?>">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <div id="file-info-content">
+                    <!-- File info loaded via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="mt-16 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -524,6 +551,24 @@ include_once 'lang/' . LOADED_LANG . '.mo.php';
     </footer>
 
     <!-- Custom JavaScript -->
+    <script>
+        window.businessFileInfoStrings = <?php echo json_encode([
+            'loading' => __('Loading...', 'business_template'),
+            'errorLoading' => __('Error loading file information', 'business_template'),
+            'originalFilename' => __('Original filename', 'business_template'),
+            'description' => __('Description', 'business_template'),
+            'size' => __('Size', 'business_template'),
+            'type' => __('Type', 'business_template'),
+            'uploaded' => __('Uploaded', 'business_template'),
+            'uploadedBy' => __('Uploaded by', 'business_template'),
+            'dimensions' => __('Dimensions', 'business_template'),
+            'expires' => __('Expires', 'business_template'),
+            'categories' => __('Categories', 'business_template'),
+            'download' => __('Download', 'business_template'),
+            'unknown' => __('Unknown', 'business_template'),
+            'days' => __('days', 'business_template'),
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    </script>
     <script src="<?php echo $this_template_url; ?>js/business.js"></script>
 
     <?php render_custom_assets('body_bottom'); ?>
