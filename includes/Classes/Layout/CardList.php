@@ -323,14 +323,13 @@ class CardList
 
                     case 'download count':
                     case 'total downloads':
-                        if (!empty($cell['content'])) {
-                            $card_data['status'][] = $this->parseDownloadCount($cell['content']);
-                        }
+                        // Card view uses card_download_count only (table columns are skipped here)
                         break;
 
                     case 'card_download_count':
-                        // Always include download count for card view
-                        $card_data['status'][] = $this->parseDownloadCount($cell['content']);
+                        if (!empty($cell['content'])) {
+                            $card_data['status'][] = $this->parseDownloadCount($cell['content']);
+                        }
                         break;
 
                     case 'encryption':
