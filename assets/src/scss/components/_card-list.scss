@@ -240,6 +240,45 @@
             box-shadow: 0 0 0 3px var(--color-primary-light);
         }
 
+        // Delete button (top-left)
+        .file-delete-btn.card-delete-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--color-danger, #dc3545);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+
+            @include bk(sm) {
+                top: 10px;
+                left: 10px;
+                width: 28px;
+                height: 28px;
+            }
+
+            &:hover {
+                background: var(--color-danger, #dc3545);
+                color: #fff;
+                transform: scale(1.05);
+            }
+
+            &:focus {
+                outline: 2px solid var(--color-danger, #dc3545);
+                outline-offset: 2px;
+            }
+        }
+
         // Checkbox container
         .card-checkbox-container {
             position: absolute;
@@ -592,7 +631,7 @@
             border-top: 1px solid var(--border-light);
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 8px;
             margin-top: auto; // Push to bottom
 
             @include bk(md) {

@@ -46,7 +46,8 @@
                     card.addEventListener('click', (e) => {
                         // Only trigger if not clicking on buttons or links
                         if (!e.target.closest('.btn') && !e.target.closest('a') &&
-                            !e.target.closest('.card-checkbox-container')) {
+                            !e.target.closest('.card-checkbox-container') &&
+                            !e.target.closest('.file-delete-btn')) {
                             checkbox.checked = !checkbox.checked;
                             this.handleCheckboxChange(checkbox);
                         }
@@ -332,6 +333,73 @@
     }
 
     /**
+     * Single-file delete (card view and table view)
+     */
+    function setupFileDeleteButtons() {
+        if (document.fileDeleteButtonsInitialized) {
+            return;
+        }
+        document.fileDeleteButtonsInitialized = true;
+
+        document.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.file-delete-btn');
+            if (!deleteBtn) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const fileId = deleteBtn.dataset.fileId;
+            if (!fileId) {
+                return;
+            }
+
+            const confirmMsg = (typeof sprintf !== 'undefined' && window.json_strings)
+                ? sprintf(json_strings.translations.confirm_delete, 1)
+                : 'Are you sure you want to delete this file?';
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            const form = document.querySelector('form.batch_actions');
+            if (!form) {
+                return;
+            }
+
+            form.querySelectorAll('input.file-delete-batch').forEach((input) => input.remove());
+
+            const batchInput = document.createElement('input');
+            batchInput.type = 'hidden';
+            batchInput.name = 'batch[]';
+            batchInput.value = fileId;
+            batchInput.className = 'file-delete-batch';
+            form.appendChild(batchInput);
+
+            const actionSelect = form.querySelector('#action');
+            if (actionSelect) {
+                actionSelect.value = 'delete';
+            }
+
+            let actionInput = form.querySelector('input[name="action"]');
+            if (!actionInput) {
+                actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                form.appendChild(actionInput);
+            }
+            actionInput.value = 'delete';
+
+            form.querySelectorAll('input[name="batch[]"].batch_checkbox, input[name="batch[]"].card-checkbox').forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+
+            form.submit();
+        });
+    }
+
+    /**
      * Auto-initialize card lists on page load
      */
     function initializeCardLists() {
@@ -385,10 +453,12 @@
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
+            setupFileDeleteButtons();
             initializeCardLists();
             setupCardAnimations();
         });
     } else {
+        setupFileDeleteButtons();
         initializeCardLists();
         setupCardAnimations();
     }

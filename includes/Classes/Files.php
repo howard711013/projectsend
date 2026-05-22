@@ -955,6 +955,11 @@ class Files
         return false;
 	}
 
+    public function currentUserCanDelete()
+    {
+        return $this->currentUserCanDeleteFile();
+    }
+
     private function currentUserCanDeleteFile()
     {
         if (defined('CRON_TASKS_AUTHORIZED') && CRON_TASKS_AUTHORIZED == true) {

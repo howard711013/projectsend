@@ -811,6 +811,8 @@ include_once LAYOUT_DIR . DS . 'folders-nav.php';
                     // Files
                     $sql->setFetchMode(PDO::FETCH_ASSOC);
                     while ($row = $sql->fetch()) {
+                        $file = new \ProjectSend\Classes\Files($row['id']);
+
                         $table->addRow([
                             'class' => 'file_draggable',
                             'attributes' => [
@@ -819,9 +821,9 @@ include_once LAYOUT_DIR . DS . 'folders-nav.php';
                             'data-attributes' => [
                                 'draggable-type' => 'file',
                                 'file-id' => $row['id'],
+                                'can-delete' => $file->currentUserCanDelete() ? '1' : '0',
                             ],
                         ]);
-                        $file = new \ProjectSend\Classes\Files($row['id']);
 
                         // Visibility is only available when filtering by client or group.
                         $assignations = get_file_assignations($file->id);
@@ -1012,6 +1014,16 @@ include_once LAYOUT_DIR . DS . 'folders-nav.php';
                             $title_content .= '<br><span class="badge bg-' . $badge_color . '"><i class="fa fa-download"></i> ' . $current_count . '/' . $max_count . ' (' . $limit_type_text . ')</span>';
                         }
 
+                        // Actions column (table view)
+                        $row_actions_content = '<div class="file-row-actions d-inline-flex align-items-center flex-wrap gap-2">';
+                        if ($file->currentUserCanEdit()) {
+                            $row_actions_content .= '<a href="files-edit.php?ids=' . $file->id . '" class="btn btn-primary btn-sm" title="' . __('Edit file', 'cftp_admin') . '"><i class="fa fa-pencil"></i><span class="button_label">' . __('Edit', 'cftp_admin') . '</span></a>';
+                        }
+                        if ($file->currentUserCanDelete()) {
+                            $row_actions_content .= '<button type="button" class="btn btn-danger btn-sm file-delete-btn" data-file-id="' . (int)$file->id . '" title="' . __('Delete file', 'cftp_admin') . '"><i class="fa fa-trash"></i><span class="button_label">' . __('Delete', 'cftp_admin') . '</span></button>';
+                        }
+                        $row_actions_content .= '</div>';
+
                         //* Add the cells to the row
                         $tbody_cells = array(
                             array(
@@ -1098,8 +1110,8 @@ include_once LAYOUT_DIR . DS . 'folders-nav.php';
                                 ),
                             ),
                             array(
-                                'content' => '<a href="files-edit.php?ids=' . $file->id . '" class="btn btn-primary btn-sm" title="' . __('Edit file', 'cftp_admin') . '"><i class="fa fa-pencil"></i><span class="button_label">' . __('Edit', 'cftp_admin') . '</span></a>',
-                                'condition' => $file->currentUserCanEdit(), // Check if current user can edit this file
+                                'content' => $row_actions_content,
+                                'condition' => $file->currentUserCanEdit() || $file->currentUserCanDelete(),
                             ),
                         );
 

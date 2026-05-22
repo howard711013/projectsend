@@ -211,8 +211,22 @@ class CardList
         if ($this->current_row % 2 == 0) {
             $card_class .= ' even';
         }
+        if (!empty($this->current_row_data['class'])) {
+            $card_class .= ' ' . $this->current_row_data['class'];
+        }
 
-        $this->contents .= '<div class="' . $card_class . '">' . "\n";
+        $this->contents .= '<div class="' . $card_class . '"';
+        if (!empty($this->current_row_data['attributes'])) {
+            foreach ($this->current_row_data['attributes'] as $attribute => $value) {
+                $this->contents .= ' ' . $attribute . '="' . html_output($value) . '"';
+            }
+        }
+        if (!empty($this->current_row_data['data-attributes'])) {
+            foreach ($this->current_row_data['data-attributes'] as $attribute => $value) {
+                $this->contents .= ' data-' . $attribute . '="' . html_output($value) . '"';
+            }
+        }
+        $this->contents .= '>' . "\n";
 
         // Process cells based on column configuration
         $cell_index = 0;
@@ -347,6 +361,15 @@ class CardList
     {
         // Extract file information for enhanced preview
         $file_info = $this->extractFileInfo($data);
+
+        // Delete button (top-left)
+        if (!empty($this->current_row_data['data-attributes']['can-delete'])
+            && $this->current_row_data['data-attributes']['can-delete'] === '1'
+            && !empty($file_info['id'])) {
+            $this->contents .= '<button type="button" class="file-delete-btn card-delete-btn" data-file-id="' . html_output($file_info['id']) . '" title="' . __('Delete file', 'cftp_admin') . '">' . "\n";
+            $this->contents .= '<i class="fa fa-trash"></i>' . "\n";
+            $this->contents .= '</button>' . "\n";
+        }
 
         // Checkbox
         if ($has_checkbox) {

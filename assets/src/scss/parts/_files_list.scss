@@ -8,4 +8,15 @@
             }
         }
     }
+
+    .file-row-actions {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+
+        .btn + .btn {
+            margin-left: 0;
+        }
+    }
 }
