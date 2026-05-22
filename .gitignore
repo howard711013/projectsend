@@ -84,6 +84,7 @@ reports/
 .idea/
 *.md
 !README.md
+!INSTALL.md
 !SECURITY.md
 !assets/changelogs/*.md
 !docs/API-UPLOAD.md
