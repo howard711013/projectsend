@@ -86,6 +86,7 @@ reports/
 !README.md
 !SECURITY.md
 !assets/changelogs/*.md
+!docs/API-UPLOAD.md
 
 # Documentation drafts
 docs_temp/
