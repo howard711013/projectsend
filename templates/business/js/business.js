@@ -490,11 +490,14 @@ function buildFileInfoHTML(file) {
         html += '</div>';
     }
 
-    if (file.download_qrcode) {
+    if (!file.expired && file.id) {
+        const baseUrl = window.base_url || '/';
+        const qrSrc = file.download_qrcode
+            || (baseUrl + 'process.php?do=get_file_qrcode&file_id=' + encodeURIComponent(file.id));
         html += '<div class="pt-4 border-t border-gray-200 dark:border-gray-700 text-center">';
         html += '<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">' +
             escapeHtml(s.downloadQr || 'Scan to download') + '</p>';
-        html += '<img src="' + file.download_qrcode + '" alt="" class="mx-auto w-36 h-36" width="144" height="144" />';
+        html += '<img src="' + qrSrc + '" alt="" class="mx-auto w-36 h-36" width="144" height="144" loading="lazy" />';
         html += '</div>';
     }
 

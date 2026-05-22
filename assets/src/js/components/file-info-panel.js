@@ -353,13 +353,15 @@
             html += '</div>';
             html += '</div>';
 
-            if (file.download_qrcode) {
+            if (!file.expired && file.id) {
                 const qrLabel = (typeof json_strings !== 'undefined' && json_strings.translations && json_strings.translations.scan_to_download)
                     ? json_strings.translations.scan_to_download
                     : 'Scan to download';
+                const qrSrc = file.download_qrcode
+                    || (json_strings.uri.base + 'process.php?do=get_file_qrcode&file_id=' + encodeURIComponent(file.id));
                 html += '<div class="file-qrcode-section">';
                 html += `<div class="file-qrcode-title"><i class="fa fa-qrcode"></i> ${this.escapeHtml(qrLabel)}</div>`;
-                html += `<img src="${file.download_qrcode}" alt="" class="file-qrcode-image" width="144" height="144" />`;
+                html += `<img src="${qrSrc}" alt="" class="file-qrcode-image" width="144" height="144" loading="lazy" />`;
                 html += '</div>';
             }
 

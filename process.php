@@ -276,6 +276,22 @@ switch ($_GET['do']) {
         echo json_encode(['success' => true, 'file' => $file_data]);
     break;
 
+    case 'get_file_qrcode':
+        if (!isset($_GET['file_id']) || empty($_GET['file_id'])) {
+            exit_with_error_code(400);
+        }
+
+        $file_id = (int)$_GET['file_id'];
+        $can_edit = user_can_edit_file(CURRENT_USER_ID, $file_id);
+        $can_download = user_can_download_file(CURRENT_USER_ID, $file_id);
+
+        if (!$can_edit && !$can_download) {
+            exit_with_error_code(403);
+        }
+
+        output_file_download_qrcode($file_id);
+        break;
+
     case 'get_public_file_info':
         header('Content-Type: application/json');
         

@@ -2060,7 +2060,7 @@ function get_absolute_download_url($file_id)
 }
 
 /**
- * Generate a QR code as an SVG data URI for use in img src attributes.
+ * Generate a QR code as a PNG data URI for use in img src attributes.
  */
 function generate_qrcode_data_uri($content)
 {
@@ -2068,15 +2068,43 @@ function generate_qrcode_data_uri($content)
         return null;
     }
 
+    if (!extension_loaded('gd')) {
+        return null;
+    }
+
     $options = new \chillerlan\QRCode\QROptions;
-    $options->outputInterface = \chillerlan\QRCode\Output\QRMarkupSVG::class;
-    $options->svgUseCssProperties = false;
+    $options->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
+    $options->scale = 6;
     $options->drawLightModules = true;
     $options->addQuietzone = true;
 
     $qrcode = new \chillerlan\QRCode\QRCode($options);
 
     return $qrcode->render($content);
+}
+
+/**
+ * Output a PNG QR code image for a file download URL.
+ */
+function output_file_download_qrcode($file_id)
+{
+    $file = new \ProjectSend\Classes\Files($file_id);
+
+    if (!$file->id || $file->expired) {
+        exit_with_error_code(404);
+    }
+
+    $url = get_absolute_download_url($file->id);
+    $data_uri = generate_qrcode_data_uri($url);
+
+    if (empty($data_uri) || !preg_match('#^data:image/png;base64,(.+)$#', $data_uri, $matches)) {
+        exit_with_error_code(500);
+    }
+
+    header('Content-Type: image/png');
+    header('Cache-Control: private, max-age=3600');
+    echo base64_decode($matches[1]);
+    exit;
 }
 
 /**
