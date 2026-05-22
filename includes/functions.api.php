@@ -100,6 +100,31 @@ function api_validate_group_ids($group_ids)
 }
 
 /**
+ * Whether a file with this original filename already exists in the system.
+ *
+ * @param string $filename Basename only (e.g. report.pdf)
+ * @return int|false Existing file id, or false if none
+ */
+function api_find_file_by_original_filename($filename)
+{
+    global $dbh;
+
+    $filename = basename(trim((string)$filename));
+    if ($filename === '') {
+        return false;
+    }
+
+    $statement = $dbh->prepare(
+        "SELECT id FROM " . TABLE_FILES . " WHERE original_url = :name LIMIT 1"
+    );
+    $statement->bindParam(':name', $filename);
+    $statement->execute();
+
+    $id = $statement->fetchColumn();
+    return ($id !== false) ? (int)$id : false;
+}
+
+/**
  * Parse group_ids from multipart or JSON body.
  *
  * @return array<int|string>

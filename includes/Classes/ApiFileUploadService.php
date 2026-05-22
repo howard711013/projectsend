@@ -25,6 +25,19 @@ class ApiFileUploadService
             ApiResponse::error(422, 'invalid_file_type', __('Invalid file extension.', 'cftp_admin'));
         }
 
+        $existing_id = api_find_file_by_original_filename($original_filename);
+        if ($existing_id !== false) {
+            ApiResponse::error(
+                409,
+                'duplicate_filename',
+                sprintf(
+                    __('A file named "%s" already exists (id %d). Upload rejected.', 'cftp_admin'),
+                    $original_filename,
+                    $existing_id
+                )
+            );
+        }
+
         $upload_error = $_FILES['file']['error'] ?? UPLOAD_ERR_OK;
         if ($upload_error !== UPLOAD_ERR_OK) {
             ApiResponse::error(400, 'upload_error', __('File upload failed.', 'cftp_admin'));

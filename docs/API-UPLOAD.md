@@ -33,6 +33,10 @@ Use `group_ids[]` (repeat for multiple groups) or a comma-separated `group_ids` 
 | `storage` | `local` or integration ID (needs upload storage select permission) |
 | `encrypt` | `1` to encrypt when encryption is enabled |
 
+### Duplicate filenames
+
+If **original filename** (from the uploaded file or `filename` field) already exists in the system, the upload is rejected with **409** `duplicate_filename`. The web UI may append `_1`, `_2`, etc.; the API does not.
+
 ## Success response (201)
 
 ```json
@@ -57,5 +61,6 @@ Use `group_ids[]` (repeat for multiple groups) or a comma-separated `group_ids` 
 |------|------|---------|
 | 401 | `invalid_token` | Missing/invalid Bearer token |
 | 403 | `forbidden` | No upload or cannot assign groups |
+| 409 | `duplicate_filename` | Same original filename already exists |
 | 422 | `invalid_group` | Unknown or disallowed group ID |
 | 503 | `api_disabled` | API turned off in options |
