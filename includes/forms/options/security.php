@@ -56,6 +56,28 @@ $form_sections = [
     ],
 
     [
+        'title' => __('API file upload', 'cftp_admin'),
+        'description' => __('Allow automated uploads via Bearer token. Users manage tokens under My Account → API keys.', 'cftp_admin'),
+        'fields' => [
+            [
+                'type' => 'checkbox',
+                'name' => 'api_enabled',
+                'label' => __('Enable REST API file upload', 'cftp_admin')
+            ],
+            [
+                'type' => 'text',
+                'name' => 'api_rate_limit_per_minute',
+                'label' => __('API rate limit (requests per minute per token)', 'cftp_admin'),
+                'required' => true,
+                'attributes' => [
+                    'type' => 'number',
+                    'min' => '0',
+                    'max' => '1000',
+                ]
+            ],
+        ],
+    ],
+    [
         'title' => __('Passwords', 'cftp_admin'),
         'description' => __('When setting up a password for an account, require at least:', 'cftp_admin'),
         'fields' => [

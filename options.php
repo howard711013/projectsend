@@ -75,6 +75,7 @@ switch ($section) {
             'two_factor_allow_email',
             'two_factor_allow_totp',
             'remember_me_enabled',
+            'api_enabled',
         );
         break;
     case 'encryption':
@@ -201,6 +202,8 @@ if ($_POST) {
         'social_login_auto_enable',
         'social_login_default_role',
         'ip_whitelist',
+        'api_enabled',
+        'api_rate_limit_per_minute',
         'ip_blacklist',
         'cron_email_summary_address_to',
     ];

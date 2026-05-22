@@ -89,6 +89,13 @@
                             </a>
                         </li>
                         <?php } ?>
+                        <?php if (current_user_can('upload')) { ?>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo BASE_URI; ?>my-api-tokens.php">
+                                <i class="fa fa-key" aria-hidden="true"></i> <?php _e('API keys', 'cftp_admin'); ?>
+                            </a>
+                        </li>
+                        <?php } ?>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="<?php echo BASE_URI; ?>process.php?do=logout">

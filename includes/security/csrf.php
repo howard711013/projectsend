@@ -29,6 +29,6 @@ function validateCsrfToken()
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $_REQUEST['csrf_token']);
 }
 
-if (!defined('IS_INSTALL') && $_POST && !validateCsrfToken()) {
+if (!defined('IS_INSTALL') && !defined('IS_API') && $_POST && !validateCsrfToken()) {
     exit_with_error_code(403);
 }

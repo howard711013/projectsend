@@ -158,100 +158,22 @@ if (!$chunks || $chunk == $chunks - 1) {
 	// Strip the temp .part suffix off
 	rename("{$filePath}.part", $filePath);
 
-    // Get storage selection from request or use default
     $storage_selection = isset($_POST['storage_selection']) ? $_POST['storage_selection'] : get_option('default_upload_storage', 'local');
+    $encrypt_flag = isset($_POST['encrypt_file']) ? $_POST['encrypt_file'] : null;
 
-    // Check if encryption is requested
-    $encrypt_file = false;
-    if (isset($_POST['encrypt_file']) && $_POST['encrypt_file'] === '1') {
-        $encrypt_file = true;
-    } elseif (\ProjectSend\Classes\Encryption::isRequired()) {
-        // Encryption is required globally
-        $encrypt_file = true;
-    } elseif (\ProjectSend\Classes\Encryption::isEnabled()) {
-        // Encryption is enabled by default but not required
-        $encrypt_file = true;
-    }
-
-    // Encrypt file if requested/required
-    if ($encrypt_file) {
-        try {
-            $encryption = new \ProjectSend\Classes\Encryption();
-
-            // Generate unique file key
-            $file_key = $encryption->generateFileKey();
-
-            // Encrypt the file
-            $encrypted_path = $filePath . '.encrypted';
-            $encrypt_result = $encryption->encryptFile($filePath, $encrypted_path, $file_key);
-
-            if (!$encrypt_result['success']) {
-                dieWithError('Encryption failed: ' . $encrypt_result['error']);
-            }
-
-            // Encrypt the file key with master key
-            $encrypted_key_data = $encryption->encryptFileKey($file_key);
-
-            // Replace original file with encrypted version
-            unlink($filePath);
-            rename($encrypted_path, $filePath);
-
-            // Store encryption metadata for later use
-            $encryption_metadata = [
-                'encrypted' => 1,
-                'encryption_key_encrypted' => $encrypted_key_data['encrypted_key'],
-                'encryption_iv' => $encrypted_key_data['iv'],
-                'encryption_algorithm' => $encryption->getAlgorithm(),
-                'encryption_file_iv' => $encrypt_result['iv']
-            ];
-
-        } catch (\Exception $e) {
-            error_log('File encryption error: ' . $e->getMessage());
-            dieWithError('File encryption failed');
-        }
-    } else {
-        $encryption_metadata = [
-            'encrypted' => 0,
-            'encryption_key_encrypted' => null,
-            'encryption_iv' => null,
-            'encryption_algorithm' => null,
-            'encryption_file_iv' => null
-        ];
-    }
-
-    // Add to database
-    $file = new \ProjectSend\Classes\Files;
-
-    // Set encryption metadata
-    $file->encrypted = $encryption_metadata['encrypted'];
-    $file->encryption_key_encrypted = $encryption_metadata['encryption_key_encrypted'];
-    $file->encryption_iv = $encryption_metadata['encryption_iv'];
-    $file->encryption_algorithm = $encryption_metadata['encryption_algorithm'];
-    $file->encryption_file_iv = $encryption_metadata['encryption_file_iv'];
-
-    // Route to appropriate storage based on selection
-    $route_result = $file->routeToStorage($filePath, $storage_selection, $fileName);
-
-    if ($route_result && isset($route_result['filename_original'])) {
-        // setDefaults() must be called after routeToStorage() because it sets
-        // title from filename_original, which is populated by generateSafeFilename()
-        $file->setDefaults();
-        $result = $file->addToDatabase();
-    } else {
-        $result = [
-            'status' => 'error',
-            'message' => __('Failed to process file upload to selected storage.', 'cftp_admin')
-        ];
-    }
+    $pipeline = new \ProjectSend\Classes\FileUploadPipeline();
+    $result = $pipeline->finalizeUpload($filePath, $fileName, [
+        'storage_selection' => $storage_selection,
+        'encrypt_file' => $encrypt_flag,
+    ]);
 
     if ($result['status'] === 'success') {
-        // Return JSON-RPC response
         $response = [
             'OK' => 1,
             'info' => [
-                'id' => $file->getId(),
+                'id' => $result['id'],
                 'NewFileName' => $fileName,
-                'encrypted' => $encryption_metadata['encrypted']
+                'encrypted' => $result['encrypted'],
             ]
         ];
 
@@ -259,12 +181,11 @@ if (!$chunks || $chunk == $chunks - 1) {
         echo json_encode($response);
         http_response_code(200);
     } else {
-        // Return error response in same format as dieWithError()
         $response = [
             'OK' => 0,
             'error' => [
                 'code' => 400,
-                'message' => $result['message'],
+                'message' => $result['message'] ?? __('Upload failed.', 'cftp_admin'),
                 'filename' => $fileName
             ]
         ];
