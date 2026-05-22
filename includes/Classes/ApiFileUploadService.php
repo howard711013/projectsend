@@ -35,7 +35,7 @@ class ApiFileUploadService
             @mkdir($temp_dir, 0755, true);
         }
 
-        $temp_path = $temp_dir . DS . 'api_' . bin2hex(random_bytes(16)) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $original_filename);
+        $temp_path = $temp_dir . DS . bin2hex(random_bytes(16)) . '.upload';
 
         if (!move_uploaded_file($_FILES['file']['tmp_name'], $temp_path)) {
             ApiResponse::error(500, 'storage_error', __('Could not store uploaded file.', 'cftp_admin'));

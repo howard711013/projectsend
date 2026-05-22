@@ -763,7 +763,12 @@ class Files
 	 */
 	public function moveToUploadDirectory($temp_name)
 	{
-        $safe_filename = $this->generateSafeFilename($temp_name);
+        // Use the client-facing name when already set (e.g. API/Plupload via routeToStorage),
+        // not the temp path basename which may include api_<random>_ prefixes.
+        $name_for_safe = !empty($this->filename_original)
+            ? $this->filename_original
+            : basename($temp_name);
+        $safe_filename = $this->generateSafeFilename($name_for_safe);
 
 		$this->uid = CURRENT_USER_ID;
 		$this->username = CURRENT_USER_USERNAME;
