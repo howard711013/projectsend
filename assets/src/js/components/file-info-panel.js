@@ -248,10 +248,13 @@
                 html += '</div>';
             }
 
-            // Status information
+            // Status information (admin fields may be omitted for clients)
+            const hasStatusInfo = file.public !== undefined || file.expires == 1 || file.download_count !== undefined;
+            if (hasStatusInfo) {
             html += '<div class="detail-group">';
             html += '<div class="detail-group-title">Status & Permissions</div>';
 
+            if (file.public !== undefined) {
             html += '<div class="detail-item">';
             html += '<span class="detail-label">Privacy</span>';
             const publicStatus = file.public == 1 ? 'success' : 'warning';
@@ -259,6 +262,7 @@
             const publicIcon = file.public == 1 ? 'fa-globe' : 'fa-lock';
             html += `<span class="detail-value"><span class="status-badge ${publicStatus}"><i class="fa ${publicIcon}"></i> ${publicText}</span></span>`;
             html += '</div>';
+            }
 
             if (file.public == 1 && file.public_url) {
                 html += '<div class="detail-item">';
@@ -289,6 +293,7 @@
             }
 
             html += '</div>';
+            }
 
             // Categories (if available)
             if (file.categories && file.categories.length > 0) {

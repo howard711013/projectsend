@@ -176,12 +176,10 @@ switch ($_GET['do']) {
 
         $file_id = (int)$_GET['file_id'];
 
-        // Check if user can access this file's information
-        // For file info, we use edit permissions only (not download permissions)
-        // This ensures users can only get detailed info about files they can edit
-        $can_access = user_can_edit_file(CURRENT_USER_ID, $file_id);
+        $can_edit = user_can_edit_file(CURRENT_USER_ID, $file_id);
+        $can_download = user_can_download_file(CURRENT_USER_ID, $file_id);
 
-        if (!$can_access) {
+        if (!$can_edit && !$can_download) {
             echo json_encode(['success' => false, 'error' => 'Access denied - you do not have permission to view this file information']);
             break;
         }
@@ -196,6 +194,7 @@ switch ($_GET['do']) {
 
         // Get file data using the getPublicData method
         $file_data = $file->getPublicData();
+        $file_data['download_url'] = $file->download_link;
 
         // Add categories with names
         $categories_names = [];
@@ -210,11 +209,6 @@ switch ($_GET['do']) {
             }
         }
         $file_data['categories'] = $categories_names;
-
-        // Add privacy information
-        $file_data['public'] = $file->public;
-        $file_data['public_token'] = $file->public_token;
-        $file_data['public_url'] = $file->public_url;
 
         // Add expiry information
         $file_data['expires'] = $file->expires;
@@ -259,11 +253,16 @@ switch ($_GET['do']) {
         // Add uploader information
         $file_data['uploaded_by'] = $file->uploaded_by;
 
-        // Add assignment information
-        $file_data['assignments'] = [
-            'clients' => $file->assignments_clients,
-            'groups' => $file->assignments_groups
-        ];
+        // Admin-only fields (edit permission)
+        if ($can_edit) {
+            $file_data['public'] = $file->public;
+            $file_data['public_token'] = $file->public_token;
+            $file_data['public_url'] = $file->public_url;
+            $file_data['assignments'] = [
+                'clients' => $file->assignments_clients,
+                'groups' => $file->assignments_groups
+            ];
+        }
 
         echo json_encode(['success' => true, 'file' => $file_data]);
     break;
