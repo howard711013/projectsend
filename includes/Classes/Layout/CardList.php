@@ -253,8 +253,13 @@ class CardList
                 $has_checkbox = true;
                 $checkbox_content = $cell['content'];
             } elseif (!empty($column['actions']) || $cell_index >= count($this->columns) - 2 || $this->isActionCell($cell['content'])) {
-                // Actions
-                $card_data['actions'][] = $cell['content'];
+                // Actions (card view uses card_content when set, e.g. edit only without delete)
+                $action_content = (isset($cell['card_content']) && $cell['card_content'] !== '')
+                    ? $cell['card_content']
+                    : $cell['content'];
+                if (!empty($action_content)) {
+                    $card_data['actions'][] = $action_content;
+                }
             } else {
                 // Check for custom column name first, then use column label
                 $identifier = !empty($custom_column_name) ? $custom_column_name : strtolower($column_label);
@@ -745,7 +750,6 @@ class CardList
         $action_patterns = [
             'files-edit.php',           // Edit button
             'btn btn-primary',          // Primary buttons
-            'btn btn-danger',           // Delete buttons
             'btn btn-success',          // Success buttons
         ];
 
