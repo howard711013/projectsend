@@ -565,6 +565,7 @@ include_once 'lang/' . LOADED_LANG . '.mo.php';
             'expires' => __('Expires', 'business_template'),
             'categories' => __('Categories', 'business_template'),
             'download' => __('Download', 'business_template'),
+            'downloadQr' => __('Scan to download', 'business_template'),
             'unknown' => __('Unknown', 'business_template'),
             'days' => __('days', 'business_template'),
         ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;

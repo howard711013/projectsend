@@ -196,6 +196,15 @@ switch ($_GET['do']) {
         $file_data = $file->getPublicData();
         $file_data['download_url'] = $file->download_link;
 
+        if (!$file->expired && ($can_edit || $can_download)) {
+            $file_data['download_url_absolute'] = get_absolute_download_url($file->id);
+            try {
+                $file_data['download_qrcode'] = generate_qrcode_data_uri($file_data['download_url_absolute']);
+            } catch (Exception $e) {
+                $file_data['download_qrcode'] = null;
+            }
+        }
+
         // Add categories with names
         $categories_names = [];
         if (!empty($file->categories)) {

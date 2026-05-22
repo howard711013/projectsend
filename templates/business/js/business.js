@@ -490,6 +490,14 @@ function buildFileInfoHTML(file) {
         html += '</div>';
     }
 
+    if (file.download_qrcode) {
+        html += '<div class="pt-4 border-t border-gray-200 dark:border-gray-700 text-center">';
+        html += '<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">' +
+            escapeHtml(s.downloadQr || 'Scan to download') + '</p>';
+        html += '<img src="' + file.download_qrcode + '" alt="" class="mx-auto w-36 h-36" width="144" height="144" />';
+        html += '</div>';
+    }
+
     html += '</div></div>';
 
     return html;

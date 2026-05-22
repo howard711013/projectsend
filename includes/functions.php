@@ -2025,6 +2025,45 @@ function make_download_link($file_info)
 }
 
 /**
+ * Build an absolute download URL suitable for QR codes and external sharing.
+ */
+function get_absolute_download_url($file_id)
+{
+    $path = 'process.php?do=download&id=' . (int)$file_id;
+    $base = defined('BASE_URI') ? BASE_URI : '/';
+
+    if (preg_match('#^https?://#i', $base)) {
+        return rtrim($base, '/') . '/' . $path;
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $basePath = ($base[0] === '/') ? $base : '/' . $base;
+
+    return $scheme . '://' . $host . rtrim($basePath, '/') . '/' . $path;
+}
+
+/**
+ * Generate a QR code as an SVG data URI for use in img src attributes.
+ */
+function generate_qrcode_data_uri($content)
+{
+    if (empty($content) || !class_exists(\chillerlan\QRCode\QRCode::class)) {
+        return null;
+    }
+
+    $options = new \chillerlan\QRCode\QROptions;
+    $options->outputInterface = \chillerlan\QRCode\Output\QRMarkupSVG::class;
+    $options->svgUseCssProperties = false;
+    $options->drawLightModules = true;
+    $options->addQuietzone = true;
+
+    $qrcode = new \chillerlan\QRCode\QRCode($options);
+
+    return $qrcode->render($content);
+}
+
+/**
  * Convert to array only if it's not one already
  */
 function to_array_if_not($data)
