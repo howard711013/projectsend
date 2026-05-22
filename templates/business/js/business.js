@@ -448,7 +448,7 @@ function buildFileInfoHTML(file) {
     }
 
     if (file.description) {
-        html += detailRow(s.description || 'Description', file.description);
+        html += detailRowDescription(s.description || 'Description', file.description, file.description_format);
     }
 
     html += detailRow(s.size || 'Size', file.size_formatted || '—');
@@ -507,6 +507,22 @@ function detailRow(label, value) {
     return '<div><label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">' +
         escapeHtml(label) + '</label>' +
         '<p class="mt-1 text-sm text-gray-900 dark:text-white">' + escapeHtml(String(value)) + '</p></div>';
+}
+
+function formatDescriptionForDisplay(text) {
+    return escapeHtml(String(text).replace(/<br\s*\/?>/gi, '\n'));
+}
+
+function detailRowDescription(label, value, format) {
+    const isHtml = format === 'html' || /<(p|ul|ol|blockquote|h[1-6])\b/i.test(String(value));
+    const valueHtml = isHtml
+        ? String(value)
+        : formatDescriptionForDisplay(value);
+
+    return '<div><label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">' +
+        escapeHtml(label) + '</label>' +
+        '<p class="mt-1 text-sm text-gray-900 dark:text-white' + (isHtml ? '' : ' whitespace-pre-line') + '">' +
+        valueHtml + '</p></div>';
 }
 
 function getImageDimensions(file) {

@@ -536,11 +536,16 @@ class Files
      */
     public function getPublicData()
     {
+        $description_is_html = preg_match('/<(p|ul|ol|blockquote|h[1-6])\b/i', (string) $this->description);
+
         // Base file data
         $data = [
             'id' => $this->id,
             'title' => $this->title,
-            'description' => $this->description,
+            'description' => $description_is_html
+                ? format_description($this->description)
+                : description_for_edit($this->description),
+            'description_format' => $description_is_html ? 'html' : 'text',
             'filename_original' => $this->filename_original,
             'extension' => $this->extension,
             'size' => $this->size,

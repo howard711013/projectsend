@@ -171,9 +171,14 @@
             html += '</div>';
 
             if (file.description) {
+                const descriptionIsHtml = file.description_format === 'html'
+                    || /<(p|ul|ol|blockquote|h[1-6])\b/i.test(file.description);
+                const descriptionValue = descriptionIsHtml
+                    ? file.description
+                    : this.escapeHtml(String(file.description).replace(/<br\s*\/?>/gi, '\n'));
                 html += '<div class="detail-item">';
                 html += '<span class="detail-label">Description</span>';
-                html += `<span class="detail-value${file.description.length > 100 ? ' truncate' : ''}">${file.description}</span>`;
+                html += `<span class="detail-value${file.description.length > 100 ? ' truncate' : ''}${descriptionIsHtml ? '' : ' whitespace-pre-line'}">${descriptionValue}</span>`;
                 html += '</div>';
             }
 
@@ -349,6 +354,12 @@
             html += '</div>';
 
             return html;
+        }
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         getExtensionColorClass(extension) {

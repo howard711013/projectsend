@@ -1350,6 +1350,22 @@ function sanitize_description($str)
 }
 
 /**
+ * Prepare a stored plain-text description for editing in a textarea.
+ * Descriptions saved without CKEditor are stored with <br> tags from nl2br().
+ */
+function description_for_edit($str)
+{
+    if (empty($str)) {
+        return '';
+    }
+
+    $str = html_entity_decode($str, ENT_QUOTES, CHARSET);
+    $str = preg_replace('/<br\s*\/?>\s*/i', "\n", $str);
+
+    return $str;
+}
+
+/**
  * Format a description for display.
  * If the description already contains block-level HTML (from CKEditor),
  * return it as-is. Otherwise apply nl2br() for plain text descriptions.

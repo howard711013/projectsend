@@ -523,8 +523,12 @@ function buildFileInfoHTML(file) {
     html += '<div class="grid grid-cols-1 gap-3">';
     
     if (file.description) {
+        var descriptionIsHtml = file.description_format === 'html' || /<(p|ul|ol|blockquote|h[1-6])\b/i.test(file.description);
+        var descriptionHtml = descriptionIsHtml
+            ? file.description
+            : $('<div>').text(String(file.description).replace(/<br\s*\/?>/gi, '\n')).html();
         html += '<div><label class="block text-xs font-medium text-google-gray-500 dark:text-google-gray-400 uppercase tracking-wide">Description</label>';
-        html += '<p class="mt-1 text-sm text-google-gray-900 dark:text-white">' + file.description + '</p></div>';
+        html += '<p class="mt-1 text-sm text-google-gray-900 dark:text-white' + (descriptionIsHtml ? '' : ' whitespace-pre-line') + '">' + descriptionHtml + '</p></div>';
     }
     
     html += '<div><label class="block text-xs font-medium text-google-gray-500 dark:text-google-gray-400 uppercase tracking-wide">Size</label>';
