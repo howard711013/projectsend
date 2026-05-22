@@ -78,6 +78,7 @@ $json_strings = [
         'confirm_generic' => __('Confirm this action?', 'cftp_admin'),
         'preview_failed' => __('Failed to load file preview', 'cftp_admin'),
         'failed_loading_resource' => __('Failed to load resource', 'cftp_admin'),
+        'scan_to_download' => __('Scan to download', 'cftp_admin'),
     ],
     'thumbnails_regenerate' => [
         'select_format' => __('Please select at least one image format to process.', 'cftp_admin'),

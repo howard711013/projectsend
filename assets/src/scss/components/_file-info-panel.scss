@@ -281,6 +281,32 @@
                 }
             }
         }
+
+        .file-qrcode-section {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+
+            .file-qrcode-title {
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-secondary);
+                margin-bottom: 12px;
+
+                i {
+                    margin-right: 6px;
+                }
+            }
+
+            .file-qrcode-image {
+                display: block;
+                margin: 0 auto;
+                max-width: 144px;
+                height: auto;
+            }
+        }
     }
 }
 

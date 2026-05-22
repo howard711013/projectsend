@@ -353,6 +353,16 @@
             html += '</div>';
             html += '</div>';
 
+            if (file.download_qrcode) {
+                const qrLabel = (typeof json_strings !== 'undefined' && json_strings.translations && json_strings.translations.scan_to_download)
+                    ? json_strings.translations.scan_to_download
+                    : 'Scan to download';
+                html += '<div class="file-qrcode-section">';
+                html += `<div class="file-qrcode-title"><i class="fa fa-qrcode"></i> ${this.escapeHtml(qrLabel)}</div>`;
+                html += `<img src="${file.download_qrcode}" alt="" class="file-qrcode-image" width="144" height="144" />`;
+                html += '</div>';
+            }
+
             return html;
         }
 
