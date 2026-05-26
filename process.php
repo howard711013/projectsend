@@ -194,7 +194,7 @@ switch ($_GET['do']) {
 
         // Get file data using the getPublicData method
         $file_data = $file->getPublicData();
-        $file_data['download_url'] = $file->download_link;
+        $file_data['download_url'] = make_download_link_raw(['id' => $file->id]);
 
         if (!$file->expired && ($can_edit || $can_download)) {
             $file_data['download_url_absolute'] = get_absolute_download_url($file->id);

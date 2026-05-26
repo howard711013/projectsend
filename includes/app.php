@@ -184,6 +184,7 @@ define('TABLE_CUSTOM_DOWNLOADS', TABLES_PREFIX . 'custom_downloads');
 define('TABLE_USER_LIMIT_UPLOAD_TO', TABLES_PREFIX . 'user_limit_upload_to');
 define('TABLE_AUTHENTICATION_CODES', TABLES_PREFIX . 'authentication_codes');
 define('TABLE_REMEMBER_TOKENS', TABLES_PREFIX . 'remember_tokens');
+define('TABLE_LOGIN_SHARE_TOKENS', TABLES_PREFIX . 'login_share_tokens');
 define('TABLE_ROLES', TABLES_PREFIX . 'roles');
 define('TABLE_PERMISSIONS', TABLES_PREFIX . 'permissions');
 define('TABLE_ROLE_PERMISSIONS', TABLES_PREFIX . 'role_permissions');
@@ -220,6 +221,7 @@ $all_system_tables = array(
     'custom_assets',
     'user_limit_upload_to',
     'authentication_codes',
+    'login_share_tokens',
     'custom_fields',
     'custom_field_values',
 );

@@ -2040,12 +2040,126 @@ function make_download_link($file_info)
     return $download_link;
 }
 
+function make_download_link_raw($file_info)
+{
+    $download_link = BASE_URI . 'process.php?do=download&id=' . $file_info['id'];
+
+    return $download_link;
+}
+
+function set_login_share_token_session_data(string $plain_token, string $expires_at): void
+{
+    $_SESSION['login_share_token'] = $plain_token;
+    $_SESSION['login_share_token_expires_at'] = $expires_at;
+}
+
+function clear_login_share_token_session_data(): void
+{
+    unset($_SESSION['login_share_token'], $_SESSION['login_share_token_expires_at']);
+}
+
+function get_current_login_share_token(): ?string
+{
+    $token = $_SESSION['login_share_token'] ?? null;
+    $expires_at = $_SESSION['login_share_token_expires_at'] ?? null;
+
+    if (empty($token) || empty($expires_at)) {
+        return null;
+    }
+
+    if (strtotime($expires_at) <= time()) {
+        clear_login_share_token_session_data();
+        return null;
+    }
+
+    return $token;
+}
+
+function get_current_login_share_token_expires_at(): ?string
+{
+    return $_SESSION['login_share_token_expires_at'] ?? null;
+}
+
+/**
+ * @return array{token: string, expires_at: string}|null
+ */
+function ensure_current_session_login_share_token(): ?array
+{
+    static $cached_token_data = null;
+    static $resolved = false;
+
+    if ($resolved) {
+        return $cached_token_data;
+    }
+
+    $resolved = true;
+
+    if (!isset($_SESSION['user_id']) || !defined('CURRENT_USER_ID')) {
+        return null;
+    }
+
+    $token = get_current_login_share_token();
+    $expires_at = get_current_login_share_token_expires_at();
+    $login_share_token = new \ProjectSend\Classes\LoginShareToken();
+
+    if (!empty($token) && !empty($expires_at) && $login_share_token->findByPlainToken($token) !== false) {
+        $cached_token_data = [
+            'token' => $token,
+            'expires_at' => $expires_at,
+        ];
+        return $cached_token_data;
+    }
+
+    clear_login_share_token_session_data();
+    $login_share_token->cleanupExpiredTokens();
+    $login_share_token->revokeBySessionId(session_id(), CURRENT_USER_ID);
+
+    $created = $login_share_token->create(CURRENT_USER_ID, session_id());
+    if ($created === false) {
+        return null;
+    }
+
+    set_login_share_token_session_data($created['plain'], $created['expires_at']);
+
+    $cached_token_data = [
+        'token' => $created['plain'],
+        'expires_at' => $created['expires_at'],
+    ];
+
+    return $cached_token_data;
+}
+
+function make_login_share_download_link(int $file_id, bool $include_download = false): ?string
+{
+    $token_data = ensure_current_session_login_share_token();
+    if (empty($token_data['token'])) {
+        return null;
+    }
+
+    $download_link = BASE_URI . 'download.php?id=' . (int)$file_id . '&login_token=' . rawurlencode($token_data['token']);
+    if ($include_download) {
+        $download_link .= '&download';
+    }
+
+    return $download_link;
+}
+
 /**
  * Build an absolute download URL suitable for QR codes and external sharing.
  */
 function get_absolute_download_url($file_id)
 {
-    $path = 'process.php?do=download&id=' . (int)$file_id;
+    $login_share_url = make_login_share_download_link((int)$file_id, true);
+    if (!empty($login_share_url)) {
+        if (preg_match('#^https?://#i', $login_share_url)) {
+            return $login_share_url;
+        }
+
+        $path = ltrim($login_share_url, '/');
+    } else {
+        $path = 'process.php?do=download&id=' . (int)$file_id;
+    }
+
     $base = defined('BASE_URI') ? BASE_URI : '/';
 
     if (preg_match('#^https?://#i', $base)) {

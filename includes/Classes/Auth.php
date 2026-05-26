@@ -49,6 +49,8 @@ class Auth
 
         session_regenerate_id(true);
 
+        $this->issueLoginShareToken($user);
+
         // Initialize session timestamp to prevent immediate expiration
         extend_session();
 
@@ -60,6 +62,22 @@ class Auth
             'owner_user' => $user->username,
             'affected_account_name' => $user->name
         ]);
+    }
+
+    private function issueLoginShareToken(Users $user): void
+    {
+        if (empty($user->id)) {
+            return;
+        }
+
+        $login_share_token = new \ProjectSend\Classes\LoginShareToken();
+        $login_share_token->cleanupExpiredTokens();
+        $login_share_token->revokeBySessionId(session_id(), (int)$user->id);
+
+        $created = $login_share_token->create((int)$user->id, session_id());
+        if ($created !== false) {
+            set_login_share_token_session_data($created['plain'], $created['expires_at']);
+        }
     }
 
     public function validate2faRequest($token, $code, bool $remember_me = false)
@@ -883,6 +901,12 @@ class Auth
 
     public function logout($clear_remember_me = true)
     {
+        if (isset($_SESSION['user_id'])) {
+            $login_share_token = new \ProjectSend\Classes\LoginShareToken();
+            $login_share_token->revokeBySessionId(session_id(), (int)$_SESSION['user_id']);
+        }
+        clear_login_share_token_session_data();
+
         // Clear remember me token if enabled
         if ($clear_remember_me && get_option('remember_me_enabled', null, '1')) {
             $rememberMe = new \ProjectSend\Classes\RememberMe();
@@ -971,6 +995,9 @@ class Auth
             $rememberMe = new \ProjectSend\Classes\RememberMe();
             $rememberMe->revokeUserTokens($_SESSION['user_id']);
             $rememberMe->clearCookie();
+
+            $login_share_token = new \ProjectSend\Classes\LoginShareToken();
+            $login_share_token->revokeAllForUser((int)$_SESSION['user_id']);
         }
 
         $this->logout(false); // Don't double-clear remember me tokens

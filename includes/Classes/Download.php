@@ -22,14 +22,23 @@ class Download
         $this->logger = new \ProjectSend\Classes\ActionsLog;
     }
 
-    public function download($file_id)
+    public function download($file_id): void
     {
-        if (!$file_id || !user_can_download_file(CURRENT_USER_ID, $file_id)) {
+        if (!defined('CURRENT_USER_ID')) {
+            exit_with_error_code(403);
+        }
+
+        $this->downloadAsUser((int)$file_id, (int)CURRENT_USER_ID, current_role_in(['Client']));
+    }
+
+    public function downloadAsUser(int $file_id, int $user_id, bool $is_client = false): void
+    {
+        if (!$file_id || $user_id < 1 || !user_can_download_file($user_id, $file_id)) {
             exit_with_error_code(403);
         }
 
         $file = new \ProjectSend\Classes\Files($file_id);
-        $download_result = record_new_download(CURRENT_USER_ID, $file->id);
+        $download_result = record_new_download($user_id, $file->id);
 
         // Check if download limit was reached
         if (is_array($download_result) && !$download_result['allowed']) {
@@ -41,16 +50,16 @@ class Download
 
         // Handle external files differently
         if ($file->storage_type !== 'local' && !empty($file->integration_id)) {
-            $this->downloadExternalFile($file);
+            $this->downloadExternalFile($file, $user_id, $is_client);
         } else {
-            $this->downloadFile($file->filename_on_disk, $file->filename_unfiltered, $file->id);
+            $this->downloadFile($file->filename_on_disk, $file->filename_unfiltered, $file->id, $user_id, $is_client);
         }
     }
 
     /**
      * Handle downloads for external storage files
      */
-    private function downloadExternalFile($file)
+    private function downloadExternalFile($file, int $user_id, bool $is_client = false)
     {
         // Get the integration and create storage instance
         $integrations_handler = new \ProjectSend\Classes\Integrations();
@@ -66,7 +75,7 @@ class Download
         }
 
         // Record the download log
-        if (current_role_in(['Client'])) {
+        if ($is_client) {
             $log_action_number = 8;
         } else {
             $log_action_number = 7;
@@ -74,10 +83,10 @@ class Download
 
         $this->logger->addEntry([
             'action' => $log_action_number,
-            'owner_id' => CURRENT_USER_ID,
+            'owner_id' => $user_id,
             'affected_file' => (int)$file->id,
             'affected_file_name' => $file->filename_original,
-            'affected_account' => CURRENT_USER_ID,
+            'affected_account' => $user_id,
             'file_title_column' => true
         ]);
 
@@ -242,12 +251,12 @@ class Download
      *
      * @return void
      */
-    private function downloadFile($filename, $save_as, $file_id)
+    private function downloadFile($filename, $save_as, $file_id, int $user_id, bool $is_client = false)
     {
         $file = new \ProjectSend\Classes\Files($file_id);
         $file_location = $file->full_path;
 
-        if (current_role_in(['Client'])) {
+        if ($is_client) {
             $log_action_number = 8;
         } else {
             $log_action_number = 7;
@@ -257,10 +266,10 @@ class Download
             /** Record the action log */
             $this->logger->addEntry([
                 'action' => $log_action_number,
-                'owner_id' => CURRENT_USER_ID,
+                'owner_id' => $user_id,
                 'affected_file' => (int)$file_id,
                 'affected_file_name' => $filename,
-                'affected_account' => CURRENT_USER_ID,
+                'affected_account' => $user_id,
                 'file_title_column' => true
             ]);
             
