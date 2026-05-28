@@ -317,33 +317,60 @@ server {
 
 ## 常見問題
 
-### 開啟網站後一直導向 `install/make-config.php`
+### 1. 開啟網站後一直導向 `install/make-config.php`
 
 - 尚未產生 `includes/sys.config.php`：完成階段一安裝，或手動從 `sys.config.sample.php` 建立。
 - `includes/` 不可寫：修正目錄權限後重試「Write config file」。
 
-### 資料庫連線失敗
+### 2. 資料庫連線失敗
 
 - 確認主機、連接埠（預設 MySQL `3306`）、帳密、資料庫名稱。
 - Docker 或非本機 DB 時，主機可能需填服務名稱或 IP，而非 `localhost`。
 - 確認 PHP 已安裝 `pdo_mysql`。
 
-### 上傳失敗或檔案過小
+### 3. 上傳失敗或檔案過小
 
 - 比對 `MAX_FILESIZE`（`sys.config.php`）與 `upload_max_filesize`、`post_max_size`。
 - 確認 `upload/files/`、`upload/temp/` 可寫。
 
-### 安裝成功但出現目錄 / chmod 警告
+### 4. 安裝成功但出現目錄 / chmod 警告
 
 資料表已建立，但部分目錄未建立或無法設為 755。請手動建立 `upload/` 子目錄並設定權限後再試上傳。
 
-### PHP 版本不符
+### P5. HP 版本不符
 
 系統要求 PHP **8.2+**（`REQUIRED_VERSION_PHP`）。低於此版本會被導向需求檢查頁面。
 
-### 重複安裝
+### 6. 重複安裝
 
 已安裝後請勿刪除資料表重新安裝同一前綴；必要時使用新資料表前綴或清空資料庫後再安裝。
+
+### 7. POST Content-Length of 190248193 bytes exceeds the limit of 8388608 bytes in
+
+#### Step1 修改 php.ini 內容
+
+可以透過以下方式 php.ini 的位置
+```shell
+php --ini
+
+vi php.ini
+
+post_max_size = 2048M
+upload_max_filesize = 2048M
+memory_limit = 2048M
+max_execution_time = 300
+max_input_time = 300
+```
+
+#### Step2 重啟 php
+```shell
+brew services list
+brew services restart php
+# or
+brew services restart php@8.3
+```
+
+Done
 
 ---
 
